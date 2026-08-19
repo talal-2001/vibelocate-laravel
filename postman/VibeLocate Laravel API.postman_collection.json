@@ -1,0 +1,978 @@
+{
+  "info": {
+    "_postman_id": "d17d16f7-3a88-4019-a1d3-790b326ed69b",
+    "name": "VibeLocate Laravel API",
+    "description": "Final Laravel-only Postman collection. No legacy .php compatibility requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "57165607",
+    "_collection_link": "https://go.postman.co/collection/57165607-d17d16f7-3a88-4019-a1d3-790b326ed69b?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 - Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
+                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
+                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Talal\",\n  \"last_name\": \"Test\",\n  \"email\": \"{{email}}\",\n  \"password\": \"12345678\",\n  \"password_confirmation\": \"12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verification_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/verify-email",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "verify-email"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resend Verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
+                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
+                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/resend-verification",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "resend-verification"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
+                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
+                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"remember_me\": false,\n  \"device_uuid\": \"{{device_uuid}}\",\n  \"device_type\": \"desktop\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Tokens & Session Auth",
+      "item": [
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
+                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
+                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/refresh-token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "refresh-token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remember Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
+                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
+                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remember_me\": true,\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/remember-me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "remember-me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Password Management",
+      "item": [
+        {
+          "name": "Forgot Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
+                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
+                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "forgot-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{password_reset_token}}\",\n  \"new_password\": \"Talal@12345\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reset-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reset-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"new_password\": \"NewPass@12345\",\n  \"new_password_confirmation\": \"NewPass@12345\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/change-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "change-password"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Updated from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferred_language\": \"en\",\n  \"currency\": \"AED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/complete-profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "complete-profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Sessions",
+      "item": [
+        {
+          "name": "Get Sessions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Session",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 - Two-Factor Authentication",
+      "item": [
+        {
+          "name": "Get 2FA Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/two-factor",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "two-factor"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start 2FA",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"start\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/two-factor",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "two-factor"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify 2FA",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"verify\",\n  \"code\": \"PUT_CURRENT_6_DIGIT_CODE_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/two-factor",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "two-factor"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Disable 2FA",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/two-factor",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "two-factor"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "let jsonData = {};\r",
+          "\r",
+          "try {\r",
+          "    jsonData = pm.response.json();\r",
+          "} catch (e) {\r",
+          "    console.log(\"Response is not JSON\");\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// Access Token\r",
+          "// ===============================\r",
+          "if (jsonData.access_token) {\r",
+          "    pm.environment.set(\"access_token\", jsonData.access_token);\r",
+          "    console.log(\"access_token saved\");\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// Refresh Token\r",
+          "// ===============================\r",
+          "if (jsonData.refresh_token) {\r",
+          "    pm.environment.set(\"refresh_token\", jsonData.refresh_token);\r",
+          "    console.log(\"refresh_token saved\");\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// Verification Token\r",
+          "// ===============================\r",
+          "if (jsonData.verification_token) {\r",
+          "    pm.environment.set(\r",
+          "        \"verification_token\",\r",
+          "        jsonData.verification_token\r",
+          "    );\r",
+          "\r",
+          "    console.log(\"verification_token saved\");\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// Reset Token\r",
+          "// ===============================\r",
+          "if (jsonData.reset_token) {\r",
+          "    pm.environment.set(\r",
+          "        \"reset_token\",\r",
+          "        jsonData.reset_token\r",
+          "    );\r",
+          "\r",
+          "    console.log(\"reset_token saved\");\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// Sessions / Device\r",
+          "// ===============================\r",
+          "if (\r",
+          "    jsonData.sessions &&\r",
+          "    Array.isArray(jsonData.sessions) &&\r",
+          "    jsonData.sessions.length > 0\r",
+          ") {\r",
+          "    const session = jsonData.sessions[0];\r",
+          "\r",
+          "    if (session.id) {\r",
+          "        pm.environment.set(\"device_id\", session.id);\r",
+          "        console.log(\"device_id saved:\", session.id);\r",
+          "    }\r",
+          "\r",
+          "    if (session.device_uuid) {\r",
+          "        pm.environment.set(\r",
+          "            \"device_uuid\",\r",
+          "            session.device_uuid\r",
+          "        );\r",
+          "\r",
+          "        console.log(\r",
+          "            \"device_uuid saved:\",\r",
+          "            session.device_uuid\r",
+          "        );\r",
+          "    }\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// User ID\r",
+          "// ===============================\r",
+          "if (jsonData.user_id) {\r",
+          "    pm.environment.set(\"user_id\", jsonData.user_id);\r",
+          "    console.log(\"user_id saved\");\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// Profile User ID\r",
+          "// ===============================\r",
+          "if (\r",
+          "    jsonData.profile &&\r",
+          "    jsonData.profile.id\r",
+          ") {\r",
+          "    pm.environment.set(\r",
+          "        \"user_id\",\r",
+          "        jsonData.profile.id\r",
+          "    );\r",
+          "\r",
+          "    console.log(\"user_id saved from profile\");\r",
+          "}\r",
+          "\r",
+          "// ===============================\r",
+          "// Request Log\r",
+          "// ===============================\r",
+          "console.log(\r",
+          "    \"Request:\",\r",
+          "    pm.request.method,\r",
+          "    pm.request.url.toString()\r",
+          ");\r",
+          "\r",
+          "console.log(\r",
+          "    \"Status:\",\r",
+          "    pm.response.code\r",
+          ");"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "verification_token",
+      "value": ""
+    },
+    {
+      "key": "password_reset_token",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": "talal.laravel.test@example.com"
+    },
+    {
+      "key": "password",
+      "value": "Talal@12345"
+    },
+    {
+      "key": "device_uuid",
+      "value": "postman-pc-001"
+    }
+  ]
+}
