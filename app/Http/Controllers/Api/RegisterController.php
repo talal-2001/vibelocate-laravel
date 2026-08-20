@@ -57,9 +57,19 @@ class RegisterController extends Controller
             DB::table('referral_codes')->insert(['user_id' => $userId, 'code' => $referralCode]);
             DB::commit();
 
-            $response = ['success' => true, 'message' => 'Registration successful. Please verify your email.', 'user_id' => $userId];
-            if (app()->environment('local')) $response['verification_token'] = $verificationToken;
-            return response()->json($response, 201, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+           $response = [
+    'success' => true,
+    'message' => 'Registration successful. Please verify your email.',
+    'user_id' => $userId,
+    'verification_token' => $verificationToken,
+];
+
+return response()->json(
+    $response,
+    201,
+    [],
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+);
         } catch (Throwable $e) {
             DB::rollBack();
             return response()->json([
