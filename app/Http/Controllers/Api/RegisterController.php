@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 class RegisterController extends Controller
@@ -21,65 +21,34 @@ class RegisterController extends Controller
         $roleSlug  = (string) $request->input('role_slug', 'tenant');
 
         if ($firstName === '' || $lastName === '') {
-            return $this->error(
-                'First name and last name are required',
-                422
-            );
+            return $this->error('First name and last name are required', 422);
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->error(
-                'Invalid email address',
-                422
-            );
+            return $this->error('Invalid email address', 422);
         }
 
         if (strlen($password) < 8) {
-            return $this->error(
-                'Password must be at least 8 characters',
-                422
-            );
+            return $this->error('Password must be at least 8 characters', 422);
         }
 
         if (!in_array($roleSlug, ['tenant', 'owner'], true)) {
-            return $this->error(
-                'Invalid registration role',
-                422
-            );
+            return $this->error('Invalid registration role', 422);
         }
 
         try {
-
-            if (
-                DB::table('users')
-                    ->where('email', $email)
-                    ->exists()
-            ) {
-                return $this->error(
-                    'Email already registered',
-                    409
-                );
+            if (DB::table('users')->where('email', $email)->exists()) {
+                return $this->error('Email already registered', 409);
             }
 
             if (
                 $phone !== '' &&
-                DB::table('users')
-                    ->where('phone', $phone)
-                    ->exists()
+                DB::table('users')->where('phone', $phone)->exists()
             ) {
-                return $this->error(
-                    'Phone already registered',
-                    409
-                );
+                return $this->error('Phone already registered', 409);
             }
 
             DB::beginTransaction();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Create User
-            |--------------------------------------------------------------------------
-            */
 
             $userId = DB::table('users')->insertGetId([
                 'first_name'    => $firstName,
@@ -89,12 +58,6 @@ class RegisterController extends Controller
                 'password_hash' => Hash::make($password),
                 'status'        => 'pending',
             ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Assign Role
-            |--------------------------------------------------------------------------
-            */
 
             $role = DB::table('roles')
                 ->where('slug', $roleSlug)
@@ -109,23 +72,11 @@ class RegisterController extends Controller
                 'role_id' => $role->id,
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create Profile
-            |--------------------------------------------------------------------------
-            */
-
             DB::table('user_profiles')->insert([
                 'user_id'            => $userId,
                 'preferred_language' => 'en',
                 'currency'           => 'AED',
             ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Generate Email OTP
-            |--------------------------------------------------------------------------
-            */
 
             $otp = (string) random_int(100000, 999999);
 
@@ -139,17 +90,8 @@ class RegisterController extends Controller
                 'expires_at' => now()->addMinutes(10),
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Referral Code
-            |--------------------------------------------------------------------------
-            */
-
             $referralCode = strtoupper(
-                'VIBE-' .
-                $userId .
-                '-' .
-                bin2hex(random_bytes(3))
+                'VIBE-' . $userId . '-' . bin2hex(random_bytes(3))
             );
 
             DB::table('referral_codes')->insert([
@@ -159,152 +101,73 @@ class RegisterController extends Controller
 
             DB::commit();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Send OTP Email Through Brevo SMTP
-            |--------------------------------------------------------------------------
-            */
-
             $fullName = trim($firstName . ' ' . $lastName);
 
-            $html = '
+            $htmlContent = '
             <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>VibeLocate AI Verification</title>
-            </head>
-
-            <body style="
-                margin:0;
-                padding:0;
-                background-color:#f4f7fb;
-                font-family:Arial,Helvetica,sans-serif;
-            ">
-
-                <div style="
-                    max-width:600px;
-                    margin:40px auto;
-                    background:#ffffff;
-                    border-radius:16px;
-                    overflow:hidden;
-                    box-shadow:0 6px 24px rgba(0,0,0,0.08);
-                ">
-
-                    <div style="
-                        background:#17365f;
-                        padding:32px;
-                        text-align:center;
-                    ">
-
-                        <h1 style="
-                            margin:0;
-                            color:#ffffff;
-                            font-size:28px;
-                        ">
-                            VibeLocate AI
-                        </h1>
-
+            <html>
+            <body style="font-family:Arial,sans-serif;background:#f4f7fb;padding:30px;">
+                <div style="max-width:600px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;">
+                    <div style="background:#17365f;color:#ffffff;padding:30px;text-align:center;">
+                        <h1 style="margin:0;">VibeLocate AI</h1>
                     </div>
 
-                    <div style="
-                        padding:40px 32px;
-                        text-align:center;
-                    ">
+                    <div style="padding:35px;text-align:center;">
+                        <h2 style="color:#17365f;">Verify your email</h2>
 
-                        <h2 style="
-                            margin:0 0 20px 0;
-                            color:#17365f;
-                            font-size:24px;
-                        ">
-                            Verify your email
-                        </h2>
+                        <p>Hello ' . e($fullName) . ',</p>
 
-                        <p style="
-                            margin:0 0 16px 0;
-                            color:#555555;
-                            font-size:16px;
-                            line-height:1.6;
-                        ">
-                            Hello ' . e($fullName) . ',
-                        </p>
-
-                        <p style="
-                            color:#555555;
-                            font-size:16px;
-                            line-height:1.6;
-                        ">
-                            Use the verification code below to complete
-                            your VibeLocate AI registration.
-                        </p>
+                        <p>Use this verification code to complete your registration:</p>
 
                         <div style="
                             display:inline-block;
-                            margin:24px 0;
-                            padding:18px 30px;
+                            margin:25px 0;
+                            padding:18px 28px;
                             background:#eef4ff;
                             border-radius:12px;
-                            color:#17365f;
                             font-size:36px;
                             font-weight:bold;
                             letter-spacing:8px;
+                            color:#17365f;
                         ">
                             ' . e($otp) . '
                         </div>
 
-                        <p style="
-                            color:#777777;
-                            font-size:14px;
-                            line-height:1.6;
-                        ">
-                            This verification code expires in 10 minutes.
-                        </p>
-
-                        <p style="
-                            color:#777777;
-                            font-size:14px;
-                            line-height:1.6;
-                        ">
-                            If you did not create this account,
-                            you can safely ignore this email.
-                        </p>
-
+                        <p>This code expires in 10 minutes.</p>
                     </div>
-
-                    <div style="
-                        background:#f7f8fa;
-                        padding:20px;
-                        text-align:center;
-                        color:#999999;
-                        font-size:12px;
-                    ">
-                        © ' . date('Y') . ' VibeLocate AI
-                    </div>
-
                 </div>
-
             </body>
-            </html>
-            ';
+            </html>';
 
-            Mail::html(
-                $html,
-                function ($message) use ($email, $fullName) {
+            $brevoResponse = Http::timeout(20)
+                ->withHeaders([
+                    'api-key' => env('BREVO_API_KEY'),
+                    'accept' => 'application/json',
+                    'content-type' => 'application/json',
+                ])
+                ->post('https://api.brevo.com/v3/smtp/email', [
+                    'sender' => [
+                        'name' => env('BREVO_SENDER_NAME', 'VibeLocate AI'),
+                        'email' => env('BREVO_SENDER_EMAIL'),
+                    ],
+                    'to' => [
+                        [
+                            'email' => $email,
+                            'name' => $fullName,
+                        ]
+                    ],
+                    'subject' => 'Your VibeLocate AI Verification Code',
+                    'htmlContent' => $htmlContent,
+                ]);
 
-                    $message
-                        ->to($email, $fullName)
-                        ->subject(
-                            'Your VibeLocate AI Verification Code'
-                        );
-                }
-            );
-
-            /*
-            |--------------------------------------------------------------------------
-            | Successful Registration
-            |--------------------------------------------------------------------------
-            */
+            if (!$brevoResponse->successful()) {
+                throw new \RuntimeException(
+                    'Brevo API error: ' .
+                    $brevoResponse->status() .
+                    ' - ' .
+                    $brevoResponse->body()
+                );
+            }
 
             return response()->json([
                 'success' => true,
@@ -316,7 +179,6 @@ class RegisterController extends Controller
             ], 201, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         } catch (Throwable $e) {
-
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
