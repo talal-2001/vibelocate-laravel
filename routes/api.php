@@ -14,26 +14,154 @@ use App\Http\Controllers\Api\ResetPasswordController;
 use App\Http\Controllers\Api\SessionsController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\VerifyEmailController;
+
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Temporary Brevo SMTP Test
+|--------------------------------------------------------------------------
+|
+| احذف هذا الـ route بعد ما نتأكد أن الإرسال يعمل.
+|
+*/
+
+Route::get('/test-mail', function () {
+
+    try {
+
+        Mail::raw(
+            'Brevo SMTP test from VibeLocate AI.',
+            function ($message) {
+
+                $message
+                    ->to('ty.hwaihi@std.alaqsa.edu.ps')
+                    ->subject('VibeLocate Mail Test');
+            }
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Test email sent successfully',
+        ]);
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Mail sending failed',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Authentication
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/register', RegisterController::class);
-Route::post('/login', LoginController::class)->middleware('vibe.rate:auth.login,5,15');
+
+Route::post('/login', LoginController::class)
+    ->middleware('vibe.rate:auth.login,5,15');
+
 Route::post('/logout', LogoutController::class);
+
 Route::post('/refresh-token', RefreshTokenController::class);
+
 Route::post('/remember-me', RememberMeController::class);
-Route::match(['get', 'post'], '/verify-email', VerifyEmailController::class);
-Route::post('/resend-verification', ResendVerificationController::class);
-Route::post('/forgot-password', ForgotPasswordController::class);
-Route::post('/reset-password', ResetPasswordController::class);
+
+
+/*
+|--------------------------------------------------------------------------
+| Email Verification
+|--------------------------------------------------------------------------
+*/
+
+Route::match(
+    ['get', 'post'],
+    '/verify-email',
+    VerifyEmailController::class
+);
+
+Route::post(
+    '/resend-verification',
+    ResendVerificationController::class
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Password Recovery
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/forgot-password',
+    ForgotPasswordController::class
+);
+
+Route::post(
+    '/reset-password',
+    ResetPasswordController::class
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Protected Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('jwt')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::match(['put', 'patch'], '/profile', [ProfileController::class, 'update']);
-    Route::match(['post', 'put', 'patch'], '/complete-profile', CompleteProfileController::class);
-    Route::post('/change-password', ChangePasswordController::class);
-    Route::get('/sessions', [SessionsController::class, 'index']);
-    Route::delete('/sessions', [SessionsController::class, 'destroy']);
-    Route::get('/two-factor', [TwoFactorController::class, 'show']);
-    Route::post('/two-factor', [TwoFactorController::class, 'store']);
-    Route::delete('/two-factor', [TwoFactorController::class, 'destroy']);
+
+    Route::get(
+        '/profile',
+        [ProfileController::class, 'show']
+    );
+
+    Route::match(
+        ['put', 'patch'],
+        '/profile',
+        [ProfileController::class, 'update']
+    );
+
+    Route::match(
+        ['post', 'put', 'patch'],
+        '/complete-profile',
+        CompleteProfileController::class
+    );
+
+    Route::post(
+        '/change-password',
+        ChangePasswordController::class
+    );
+
+    Route::get(
+        '/sessions',
+        [SessionsController::class, 'index']
+    );
+
+    Route::delete(
+        '/sessions',
+        [SessionsController::class, 'destroy']
+    );
+
+    Route::get(
+        '/two-factor',
+        [TwoFactorController::class, 'show']
+    );
+
+    Route::post(
+        '/two-factor',
+        [TwoFactorController::class, 'store']
+    );
+
+    Route::delete(
+        '/two-factor',
+        [TwoFactorController::class, 'destroy']
+    );
 });
