@@ -21,36 +21,6 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Postman Collection
-|--------------------------------------------------------------------------
-|
-| Public URL:
-| https://vibelocate-laravel.onrender.com/api/postman.json
-|
-*/
-
-Route::get('/postman.json', function () {
-
-    $file = base_path(
-        'postman/VibeLocate Laravel API.postman_collection.json'
-    );
-
-    if (!file_exists($file)) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Postman collection file not found',
-        ], 404);
-    }
-
-    return response()->file($file, [
-        'Content-Type' => 'application/json; charset=UTF-8',
-        'Cache-Control' => 'no-cache, no-store, must-revalidate',
-    ]);
-});
-
-
-/*
-|--------------------------------------------------------------------------
 | Authentication
 |--------------------------------------------------------------------------
 */
