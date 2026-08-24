@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "d17d16f7-3a88-4019-a1d3-790b326ed69b",
     "name": "VibeLocate Laravel API",
-    "description": "Final Laravel-only Postman collection. No legacy .php compatibility requests.",
+    "description": "VibeLocate Laravel API collection configured for the Render deployment. Includes registration OTP, forgot/reset password OTP, change-password OTP, profile, sessions, refresh/logout, remember-me, complete-profile and 2FA.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "57165607",
     "_collection_link": "https://go.postman.co/collection/57165607-d17d16f7-3a88-4019-a1d3-790b326ed69b?source=collection_link"
@@ -19,10 +19,8 @@
               "script": {
                 "exec": [
                   "let j = {}; try { j = pm.response.json(); } catch(e) {}",
-                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
-                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
-                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
-                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                  "if (j.user_id) pm.environment.set('user_id', j.user_id);",
+                  "console.log('Register:', pm.response.code, j.message || '');"
                 ],
                 "type": "text/javascript"
               }
@@ -42,7 +40,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"Talal\",\n  \"last_name\": \"Test\",\n  \"email\": \"{{email}}\",\n  \"password\": \"12345678\",\n  \"password_confirmation\": \"12345678\"\n}"
+              "raw": "{\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"+970599123456\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\",\n  \"role_slug\": \"tenant\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/register",
@@ -58,7 +61,7 @@
           "response": []
         },
         {
-          "name": "Verify Email",
+          "name": "Verify Email OTP",
           "request": {
             "method": "POST",
             "header": [
@@ -73,23 +76,42 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"{{verification_token}}\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"{{otp}}\",\n  \"device_uuid\": \"{{device_uuid}}\",\n  \"device_type\": \"desktop\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{base_url}}/api/verify-email",
+              "raw": "{{base_url}}/api/verify-otp",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
-                "verify-email"
+                "verify-otp"
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.access_token) pm.environment.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.environment.set('refresh_token', j.refresh_token);",
+                  "console.log('Verify Email OTP:', pm.response.code, j.message || '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
-          "name": "Resend Verification",
+          "name": "Resend Verification OTP",
           "event": [
             {
               "listen": "test",
@@ -119,16 +141,21 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{base_url}}/api/resend-verification",
+              "raw": "{{base_url}}/api/resend-otp",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
-                "resend-verification"
+                "resend-otp"
               ]
             }
           },
@@ -142,10 +169,9 @@
               "script": {
                 "exec": [
                   "let j = {}; try { j = pm.response.json(); } catch(e) {}",
-                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
-                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
-                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
-                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                  "if (j.access_token) pm.environment.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.environment.set('refresh_token', j.refresh_token);",
+                  "console.log('Login:', pm.response.code, j.message || '');"
                 ],
                 "type": "text/javascript"
               }
@@ -165,7 +191,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"remember_me\": false,\n  \"device_uuid\": \"{{device_uuid}}\",\n  \"device_type\": \"desktop\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"remember_me\": false,\n  \"device_uuid\": \"{{device_uuid}}\",\n  \"device_type\": \"desktop\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/login",
@@ -193,10 +224,8 @@
               "script": {
                 "exec": [
                   "let j = {}; try { j = pm.response.json(); } catch(e) {}",
-                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
-                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
-                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
-                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                  "if (j.access_token) pm.environment.set('access_token', j.access_token);",
+                  "if (j.refresh_token) pm.environment.set('refresh_token', j.refresh_token);"
                 ],
                 "type": "text/javascript"
               }
@@ -216,7 +245,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/refresh-token",
@@ -272,7 +306,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"remember_me\": true,\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+              "raw": "{\n  \"remember_me\": true,\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/remember-me",
@@ -313,7 +352,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/logout",
@@ -341,10 +385,8 @@
               "script": {
                 "exec": [
                   "let j = {}; try { j = pm.response.json(); } catch(e) {}",
-                  "if (j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
-                  "if (j.refresh_token) pm.collectionVariables.set('refresh_token', j.refresh_token);",
-                  "if (j.verification_token) pm.collectionVariables.set('verification_token', j.verification_token);",
-                  "if (j.reset_token) pm.collectionVariables.set('password_reset_token', j.reset_token);"
+                  "console.log('Forgot Password:', pm.response.code, j.message || '');",
+                  "console.log('Enter the OTP received by email into the environment variable reset_token before the next request.');"
                 ],
                 "type": "text/javascript"
               }
@@ -364,7 +406,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/forgot-password",
@@ -377,6 +424,55 @@
               ]
             }
           },
+          "response": []
+        },
+        {
+          "name": "Verify Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"{{reset_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/verify-reset-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "verify-reset-otp"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.reset_token) pm.environment.set('reset_token', j.reset_token);",
+                  "console.log('Verify Reset OTP:', pm.response.code, j.message || '');"
+                ]
+              }
+            }
+          ],
           "response": []
         },
         {
@@ -395,7 +491,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"{{password_reset_token}}\",\n  \"new_password\": \"Talal@12345\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"token\": \"{{reset_token}}\",\n  \"new_password\": \"{{new_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/reset-password",
@@ -411,7 +512,7 @@
           "response": []
         },
         {
-          "name": "Change Password",
+          "name": "Change Password - Send OTP",
           "request": {
             "auth": {
               "type": "bearer",
@@ -436,7 +537,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"new_password\": \"NewPass@12345\",\n  \"new_password_confirmation\": \"NewPass@12345\"\n}"
+              "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"new_password\": \"{{final_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/change-password",
@@ -449,7 +555,67 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "console.log('Change Password OTP:', pm.response.code, j.message || '');",
+                  "console.log('Enter the OTP received by email into the environment variable otp before the confirm request.');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change Password - Confirm OTP",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"new_password\": \"{{final_password}}\",\n  \"otp\": \"{{otp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/change-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "change-password"
+              ]
+            }
+          },
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -607,7 +773,22 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch(e) {}",
+                  "if (j.sessions && Array.isArray(j.sessions) && j.sessions.length) {",
+                  "  if (j.sessions[0].id) pm.environment.set('device_id', j.sessions[0].id);",
+                  "  if (j.sessions[0].device_uuid) pm.environment.set('device_uuid', j.sessions[0].device_uuid);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Delete Session",
@@ -635,7 +816,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"device_id\": 1\n}"
+              "raw": "{\n  \"device_id\": \"{{device_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/sessions",
@@ -825,118 +1011,19 @@
         "packages": {},
         "requests": {},
         "exec": [
-          "let jsonData = {};\r",
-          "\r",
-          "try {\r",
-          "    jsonData = pm.response.json();\r",
-          "} catch (e) {\r",
-          "    console.log(\"Response is not JSON\");\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// Access Token\r",
-          "// ===============================\r",
-          "if (jsonData.access_token) {\r",
-          "    pm.environment.set(\"access_token\", jsonData.access_token);\r",
-          "    console.log(\"access_token saved\");\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// Refresh Token\r",
-          "// ===============================\r",
-          "if (jsonData.refresh_token) {\r",
-          "    pm.environment.set(\"refresh_token\", jsonData.refresh_token);\r",
-          "    console.log(\"refresh_token saved\");\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// Verification Token\r",
-          "// ===============================\r",
-          "if (jsonData.verification_token) {\r",
-          "    pm.environment.set(\r",
-          "        \"verification_token\",\r",
-          "        jsonData.verification_token\r",
-          "    );\r",
-          "\r",
-          "    console.log(\"verification_token saved\");\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// Reset Token\r",
-          "// ===============================\r",
-          "if (jsonData.reset_token) {\r",
-          "    pm.environment.set(\r",
-          "        \"reset_token\",\r",
-          "        jsonData.reset_token\r",
-          "    );\r",
-          "\r",
-          "    console.log(\"reset_token saved\");\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// Sessions / Device\r",
-          "// ===============================\r",
-          "if (\r",
-          "    jsonData.sessions &&\r",
-          "    Array.isArray(jsonData.sessions) &&\r",
-          "    jsonData.sessions.length > 0\r",
-          ") {\r",
-          "    const session = jsonData.sessions[0];\r",
-          "\r",
-          "    if (session.id) {\r",
-          "        pm.environment.set(\"device_id\", session.id);\r",
-          "        console.log(\"device_id saved:\", session.id);\r",
-          "    }\r",
-          "\r",
-          "    if (session.device_uuid) {\r",
-          "        pm.environment.set(\r",
-          "            \"device_uuid\",\r",
-          "            session.device_uuid\r",
-          "        );\r",
-          "\r",
-          "        console.log(\r",
-          "            \"device_uuid saved:\",\r",
-          "            session.device_uuid\r",
-          "        );\r",
-          "    }\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// User ID\r",
-          "// ===============================\r",
-          "if (jsonData.user_id) {\r",
-          "    pm.environment.set(\"user_id\", jsonData.user_id);\r",
-          "    console.log(\"user_id saved\");\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// Profile User ID\r",
-          "// ===============================\r",
-          "if (\r",
-          "    jsonData.profile &&\r",
-          "    jsonData.profile.id\r",
-          ") {\r",
-          "    pm.environment.set(\r",
-          "        \"user_id\",\r",
-          "        jsonData.profile.id\r",
-          "    );\r",
-          "\r",
-          "    console.log(\"user_id saved from profile\");\r",
-          "}\r",
-          "\r",
-          "// ===============================\r",
-          "// Request Log\r",
-          "// ===============================\r",
-          "console.log(\r",
-          "    \"Request:\",\r",
-          "    pm.request.method,\r",
-          "    pm.request.url.toString()\r",
-          ");\r",
-          "\r",
-          "console.log(\r",
-          "    \"Status:\",\r",
-          "    pm.response.code\r",
-          ");"
+          "let jsonData = {};",
+          "try { jsonData = pm.response.json(); } catch (e) {}",
+          "if (jsonData.access_token) pm.environment.set('access_token', jsonData.access_token);",
+          "if (jsonData.refresh_token) pm.environment.set('refresh_token', jsonData.refresh_token);",
+          "if (jsonData.reset_token) pm.environment.set('reset_token', jsonData.reset_token);",
+          "if (jsonData.user_id) pm.environment.set('user_id', jsonData.user_id);",
+          "if (jsonData.profile && jsonData.profile.id) pm.environment.set('user_id', jsonData.profile.id);",
+          "if (jsonData.sessions && Array.isArray(jsonData.sessions) && jsonData.sessions.length > 0) {",
+          "  if (jsonData.sessions[0].id) pm.environment.set('device_id', jsonData.sessions[0].id);",
+          "  if (jsonData.sessions[0].device_uuid) pm.environment.set('device_uuid', jsonData.sessions[0].device_uuid);",
+          "}",
+          "console.log('Request:', pm.request.method, pm.request.url.toString());",
+          "console.log('Status:', pm.response.code);"
         ]
       }
     }
@@ -944,7 +1031,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://127.0.0.1:8000"
+      "value": "https://vibelocate-laravel.onrender.com"
     },
     {
       "key": "access_token",
@@ -964,15 +1051,31 @@
     },
     {
       "key": "email",
-      "value": "talal.laravel.test@example.com"
+      "value": "testuser@example.com"
     },
     {
       "key": "password",
-      "value": "Talal@12345"
+      "value": "Test12345"
     },
     {
       "key": "device_uuid",
       "value": "postman-pc-001"
+    },
+    {
+      "key": "otp",
+      "value": ""
+    },
+    {
+      "key": "reset_token",
+      "value": ""
+    },
+    {
+      "key": "new_password",
+      "value": "TestNew12345"
+    },
+    {
+      "key": "final_password",
+      "value": "TestFinal12345"
     }
   ]
 }
