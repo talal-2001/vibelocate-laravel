@@ -40,6 +40,11 @@ Route::post('/remember-me', RememberMeController::class);
 |--------------------------------------------------------------------------
 */
 
+Route::post(
+    '/verify-otp',
+    VerifyEmailController::class
+);
+
 Route::match(
     ['get', 'post'],
     '/verify-email',
