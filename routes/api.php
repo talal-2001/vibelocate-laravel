@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\VerifyEmailController;
 
 use Illuminate\Support\Facades\Route;
 
+
 /*
 |--------------------------------------------------------------------------
 | Authentication
@@ -34,10 +35,18 @@ Route::post('/refresh-token', RefreshTokenController::class);
 
 Route::post('/remember-me', RememberMeController::class);
 
+
 /*
 |--------------------------------------------------------------------------
-| Email Verification
+| Email Verification / OTP
 |--------------------------------------------------------------------------
+|
+| Front-End routes:
+| POST /api/verify-otp
+| POST /api/resend-otp
+|
+| Old routes are kept for compatibility.
+|
 */
 
 Route::post(
@@ -52,9 +61,15 @@ Route::match(
 );
 
 Route::post(
+    '/resend-otp',
+    ResendVerificationController::class
+);
+
+Route::post(
     '/resend-verification',
     ResendVerificationController::class
 );
+
 
 /*
 |--------------------------------------------------------------------------
@@ -72,6 +87,7 @@ Route::post(
     ResetPasswordController::class
 );
 
+
 /*
 |--------------------------------------------------------------------------
 | Protected Routes
@@ -79,6 +95,12 @@ Route::post(
 */
 
 Route::middleware('jwt')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Profile
+    |--------------------------------------------------------------------------
+    */
 
     Route::get(
         '/profile',
@@ -97,10 +119,24 @@ Route::middleware('jwt')->group(function () {
         CompleteProfileController::class
     );
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Password
+    |--------------------------------------------------------------------------
+    */
+
     Route::post(
         '/change-password',
         ChangePasswordController::class
     );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sessions
+    |--------------------------------------------------------------------------
+    */
 
     Route::get(
         '/sessions',
@@ -111,6 +147,13 @@ Route::middleware('jwt')->group(function () {
         '/sessions',
         [SessionsController::class, 'destroy']
     );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Two Factor Authentication
+    |--------------------------------------------------------------------------
+    */
 
     Route::get(
         '/two-factor',
