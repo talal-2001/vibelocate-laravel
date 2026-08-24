@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ResetPasswordController;
 use App\Http\Controllers\Api\SessionsController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\VerifyEmailController;
+use App\Http\Controllers\Api\VerifyResetOtpController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -24,45 +25,44 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::post('/register', RegisterController::class);
+Route::post(
+    '/register',
+    RegisterController::class
+);
 
-Route::post('/login', LoginController::class)
-    ->middleware('vibe.rate:auth.login,5,15');
+Route::post(
+    '/login',
+    LoginController::class
+)->middleware(
+    'vibe.rate:auth.login,5,15'
+);
 
-Route::post('/logout', LogoutController::class);
+Route::post(
+    '/logout',
+    LogoutController::class
+);
 
-Route::post('/refresh-token', RefreshTokenController::class);
+Route::post(
+    '/refresh-token',
+    RefreshTokenController::class
+);
 
-Route::post('/remember-me', RememberMeController::class);
+Route::post(
+    '/remember-me',
+    RememberMeController::class
+);
 
 
 /*
 |--------------------------------------------------------------------------
-| Email Verification / OTP
+| Email Verification
 |--------------------------------------------------------------------------
-|
-| Front-End routes:
-| POST /api/verify-otp
-| POST /api/resend-otp
-|
-| Old routes are kept for compatibility.
-|
 */
-
-Route::post(
-    '/verify-otp',
-    VerifyEmailController::class
-);
 
 Route::match(
     ['get', 'post'],
     '/verify-email',
     VerifyEmailController::class
-);
-
-Route::post(
-    '/resend-otp',
-    ResendVerificationController::class
 );
 
 Route::post(
@@ -80,6 +80,11 @@ Route::post(
 Route::post(
     '/forgot-password',
     ForgotPasswordController::class
+);
+
+Route::post(
+    '/verify-reset-otp',
+    VerifyResetOtpController::class
 );
 
 Route::post(
@@ -122,7 +127,7 @@ Route::middleware('jwt')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Password
+    | Change Password
     |--------------------------------------------------------------------------
     */
 
