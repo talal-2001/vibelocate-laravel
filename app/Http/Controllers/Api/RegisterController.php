@@ -75,12 +75,6 @@ class RegisterController extends Controller
 
             DB::beginTransaction();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create User
-            |--------------------------------------------------------------------------
-            */
-
             $userId = DB::table('users')->insertGetId([
                 'first_name'    => $firstName,
                 'last_name'     => $lastName,
@@ -89,12 +83,6 @@ class RegisterController extends Controller
                 'password_hash' => Hash::make($password),
                 'status'        => 'pending',
             ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Assign Role
-            |--------------------------------------------------------------------------
-            */
 
             $role = DB::table('roles')
                 ->where('slug', $roleSlug)
@@ -109,23 +97,11 @@ class RegisterController extends Controller
                 'role_id' => $role->id,
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create User Profile
-            |--------------------------------------------------------------------------
-            */
-
             DB::table('user_profiles')->insert([
                 'user_id'            => $userId,
                 'preferred_language' => 'en',
                 'currency'           => 'AED',
             ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Generate OTP
-            |--------------------------------------------------------------------------
-            */
 
             $otp = (string) random_int(100000, 999999);
 
@@ -139,12 +115,6 @@ class RegisterController extends Controller
                 'expires_at' => now()->addMinutes(10),
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Referral Code
-            |--------------------------------------------------------------------------
-            */
-
             $referralCode = strtoupper(
                 'VIBE-' .
                 $userId .
@@ -156,12 +126,6 @@ class RegisterController extends Controller
                 'user_id' => $userId,
                 'code'    => $referralCode,
             ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Send OTP With Brevo API
-            |--------------------------------------------------------------------------
-            */
 
             $fullName = trim($firstName . ' ' . $lastName);
 
@@ -292,13 +256,13 @@ class RegisterController extends Controller
 
             if (!$apiKey) {
                 throw new \RuntimeException(
-                    'BREVO_API_KEY is missing'
+                    'Email service configuration error'
                 );
             }
 
             if (!$senderEmail) {
                 throw new \RuntimeException(
-                    'BREVO_SENDER_EMAIL is missing'
+                    'Email service configuration error'
                 );
             }
 
@@ -332,32 +296,16 @@ class RegisterController extends Controller
 
             if (!$brevoResponse->successful()) {
                 throw new \RuntimeException(
-                    'Brevo API error ' .
-                    $brevoResponse->status() .
-                    ': ' .
-                    $brevoResponse->body()
+                    'Email delivery failed'
                 );
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Commit Everything
-            |--------------------------------------------------------------------------
-            */
-
             DB::commit();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Success Response
-            |--------------------------------------------------------------------------
-            */
 
             return response()->json([
                 'success' => true,
                 'message' =>
                     'Registration successful. Verification code sent to your email.',
-
                 'user_id' => $userId,
                 'email' => $email,
                 'verification_required' => true,
@@ -372,19 +320,9 @@ class RegisterController extends Controller
 
             report($e);
 
-            /*
-            |--------------------------------------------------------------------------
-            | TEMPORARY DEBUG
-            |--------------------------------------------------------------------------
-            |
-            | بعد ما نحل المشكلة بنشيل error من الـ response.
-            |
-            */
-
             return response()->json([
                 'success' => false,
                 'message' => 'Registration failed',
-                'error' => $e->getMessage(),
             ], 500, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
     }

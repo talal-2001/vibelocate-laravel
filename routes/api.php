@@ -15,47 +15,7 @@ use App\Http\Controllers\Api\SessionsController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\VerifyEmailController;
 
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Temporary Brevo SMTP Test
-|--------------------------------------------------------------------------
-|
-| احذف هذا الـ route بعد ما نتأكد أن الإرسال يعمل.
-|
-*/
-
-Route::get('/test-mail', function () {
-
-    try {
-
-        Mail::raw(
-            'Brevo SMTP test from VibeLocate AI.',
-            function ($message) {
-
-                $message
-                    ->to('ty.hwaihi@std.alaqsa.edu.ps')
-                    ->subject('VibeLocate Mail Test');
-            }
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Test email sent successfully',
-        ]);
-
-    } catch (\Throwable $e) {
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Mail sending failed',
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-});
-
 
 /*
 |--------------------------------------------------------------------------
@@ -74,7 +34,6 @@ Route::post('/refresh-token', RefreshTokenController::class);
 
 Route::post('/remember-me', RememberMeController::class);
 
-
 /*
 |--------------------------------------------------------------------------
 | Email Verification
@@ -92,7 +51,6 @@ Route::post(
     ResendVerificationController::class
 );
 
-
 /*
 |--------------------------------------------------------------------------
 | Password Recovery
@@ -108,7 +66,6 @@ Route::post(
     '/reset-password',
     ResetPasswordController::class
 );
-
 
 /*
 |--------------------------------------------------------------------------
