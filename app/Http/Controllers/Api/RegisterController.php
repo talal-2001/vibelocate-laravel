@@ -17,8 +17,16 @@ class RegisterController extends Controller
         $lastName  = trim((string) $request->input('last_name', ''));
         $email     = strtolower(trim((string) $request->input('email', '')));
         $phone     = trim((string) $request->input('phone', ''));
+        $city      = trim((string) $request->input('city', ''));
+        $country   = trim((string) $request->input('country', ''));
         $password  = (string) $request->input('password', '');
         $roleSlug  = (string) $request->input('role_slug', 'tenant');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
 
         if ($firstName === '' || $lastName === '') {
             return $this->error(
@@ -30,6 +38,27 @@ class RegisterController extends Controller
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return $this->error(
                 'Invalid email address',
+                422
+            );
+        }
+
+        if ($phone === '') {
+            return $this->error(
+                'Phone number is required',
+                422
+            );
+        }
+
+        if ($city === '') {
+            return $this->error(
+                'City is required',
+                422
+            );
+        }
+
+        if ($country === '') {
+            return $this->error(
+                'Country is required',
                 422
             );
         }
@@ -50,6 +79,12 @@ class RegisterController extends Controller
 
         try {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Duplicate Email
+            |--------------------------------------------------------------------------
+            */
+
             if (
                 DB::table('users')
                     ->where('email', $email)
@@ -61,8 +96,13 @@ class RegisterController extends Controller
                 );
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Duplicate Phone
+            |--------------------------------------------------------------------------
+            */
+
             if (
-                $phone !== '' &&
                 DB::table('users')
                     ->where('phone', $phone)
                     ->exists()
@@ -75,21 +115,35 @@ class RegisterController extends Controller
 
             DB::beginTransaction();
 
+            /*
+            |--------------------------------------------------------------------------
+            | Create User
+            |--------------------------------------------------------------------------
+            */
+
             $userId = DB::table('users')->insertGetId([
                 'first_name'    => $firstName,
                 'last_name'     => $lastName,
                 'email'         => $email,
-                'phone'         => $phone !== '' ? $phone : null,
+                'phone'         => $phone,
                 'password_hash' => Hash::make($password),
                 'status'        => 'pending',
             ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Role
+            |--------------------------------------------------------------------------
+            */
 
             $role = DB::table('roles')
                 ->where('slug', $roleSlug)
                 ->first();
 
             if (!$role) {
-                throw new \RuntimeException('Role not found');
+                throw new \RuntimeException(
+                    'Role not found'
+                );
             }
 
             DB::table('user_roles')->insert([
@@ -97,13 +151,30 @@ class RegisterController extends Controller
                 'role_id' => $role->id,
             ]);
 
+            /*
+            |--------------------------------------------------------------------------
+            | User Profile
+            |--------------------------------------------------------------------------
+            */
+
             DB::table('user_profiles')->insert([
                 'user_id'            => $userId,
                 'preferred_language' => 'en',
                 'currency'           => 'AED',
+                'city'               => $city,
+                'country'            => $country,
             ]);
 
-            $otp = (string) random_int(100000, 999999);
+            /*
+            |--------------------------------------------------------------------------
+            | Generate Verification OTP
+            |--------------------------------------------------------------------------
+            */
+
+            $otp = (string) random_int(
+                100000,
+                999999
+            );
 
             DB::table('email_verifications')
                 ->where('user_id', $userId)
@@ -114,6 +185,12 @@ class RegisterController extends Controller
                 'token'      => $otp,
                 'expires_at' => now()->addMinutes(10),
             ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Referral Code
+            |--------------------------------------------------------------------------
+            */
 
             $referralCode = strtoupper(
                 'VIBE-' .
@@ -127,15 +204,28 @@ class RegisterController extends Controller
                 'code'    => $referralCode,
             ]);
 
-            $fullName = trim($firstName . ' ' . $lastName);
+            /*
+            |--------------------------------------------------------------------------
+            | Verification Email
+            |--------------------------------------------------------------------------
+            */
+
+            $fullName = trim(
+                $firstName . ' ' . $lastName
+            );
 
             $htmlContent = '
             <!DOCTYPE html>
             <html lang="en">
+
             <head>
                 <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>VibeLocate AI Verification</title>
+                <meta name="viewport"
+                      content="width=device-width, initial-scale=1.0">
+
+                <title>
+                    VibeLocate AI Verification
+                </title>
             </head>
 
             <body style="
@@ -159,6 +249,7 @@ class RegisterController extends Controller
                         padding:32px;
                         text-align:center;
                     ">
+
                         <h1 style="
                             margin:0;
                             color:#ffffff;
@@ -166,6 +257,7 @@ class RegisterController extends Controller
                         ">
                             VibeLocate AI
                         </h1>
+
                     </div>
 
                     <div style="
@@ -194,8 +286,8 @@ class RegisterController extends Controller
                             font-size:16px;
                             line-height:1.6;
                         ">
-                            Use the verification code below to complete
-                            your VibeLocate AI registration.
+                            Use the verification code below
+                            to complete your VibeLocate AI registration.
                         </p>
 
                         <div style="
@@ -247,50 +339,63 @@ class RegisterController extends Controller
             </html>
             ';
 
-            $apiKey = env('BREVO_API_KEY');
-            $senderEmail = env('BREVO_SENDER_EMAIL');
+            /*
+            |--------------------------------------------------------------------------
+            | Brevo Configuration
+            |--------------------------------------------------------------------------
+            */
+
+            $apiKey = env(
+                'BREVO_API_KEY'
+            );
+
+            $senderEmail = env(
+                'BREVO_SENDER_EMAIL'
+            );
+
             $senderName = env(
                 'BREVO_SENDER_NAME',
                 'VibeLocate AI'
             );
 
-            if (!$apiKey) {
+            if (!$apiKey || !$senderEmail) {
                 throw new \RuntimeException(
                     'Email service configuration error'
                 );
             }
 
-            if (!$senderEmail) {
-                throw new \RuntimeException(
-                    'Email service configuration error'
-                );
-            }
+            /*
+            |--------------------------------------------------------------------------
+            | Send Verification Email
+            |--------------------------------------------------------------------------
+            */
 
             $brevoResponse = Http::timeout(30)
                 ->withHeaders([
-                    'api-key' => $apiKey,
-                    'accept' => 'application/json',
+                    'api-key'      => $apiKey,
+                    'accept'       => 'application/json',
                     'content-type' => 'application/json',
                 ])
                 ->post(
                     'https://api.brevo.com/v3/smtp/email',
                     [
                         'sender' => [
-                            'name' => $senderName,
+                            'name'  => $senderName,
                             'email' => $senderEmail,
                         ],
 
                         'to' => [
                             [
                                 'email' => $email,
-                                'name' => $fullName,
+                                'name'  => $fullName,
                             ],
                         ],
 
                         'subject' =>
                             'Your VibeLocate AI Verification Code',
 
-                        'htmlContent' => $htmlContent,
+                        'htmlContent' =>
+                            $htmlContent,
                     ]
                 );
 
@@ -302,14 +407,30 @@ class RegisterController extends Controller
 
             DB::commit();
 
+            /*
+            |--------------------------------------------------------------------------
+            | Response
+            |--------------------------------------------------------------------------
+            */
+
             return response()->json([
                 'success' => true,
+
                 'message' =>
                     'Registration successful. Verification code sent to your email.',
+
                 'user_id' => $userId,
+
                 'email' => $email,
+
+                'city' => $city,
+
+                'country' => $country,
+
                 'verification_required' => true,
+
                 'otp_expires_in' => 600,
+
             ], 201, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         } catch (Throwable $e) {
@@ -327,8 +448,10 @@ class RegisterController extends Controller
         }
     }
 
-    private function error(string $message, int $status)
-    {
+    private function error(
+        string $message,
+        int $status
+    ) {
         return response()->json([
             'success' => false,
             'message' => $message,
