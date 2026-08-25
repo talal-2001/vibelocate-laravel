@@ -66,10 +66,14 @@ Route::match(
 );
 
 Route::post(
+    '/verify-otp',
+    VerifyEmailController::class
+);
+
+Route::post(
     '/resend-verification',
     ResendVerificationController::class
 );
-
 
 /*
 |--------------------------------------------------------------------------
