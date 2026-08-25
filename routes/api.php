@@ -59,21 +59,40 @@ Route::post(
 |--------------------------------------------------------------------------
 */
 
+/*
+| المسار الأصلي
+*/
 Route::match(
     ['get', 'post'],
     '/verify-email',
     VerifyEmailController::class
 );
 
+/*
+| المسار الذي يستخدمه الفرونت
+*/
 Route::post(
     '/verify-otp',
     VerifyEmailController::class
 );
 
+
+/*
+| المسار الأصلي
+*/
 Route::post(
     '/resend-verification',
     ResendVerificationController::class
 );
+
+/*
+| المسار الذي يستخدمه الفرونت
+*/
+Route::post(
+    '/resend-otp',
+    ResendVerificationController::class
+);
+
 
 /*
 |--------------------------------------------------------------------------
