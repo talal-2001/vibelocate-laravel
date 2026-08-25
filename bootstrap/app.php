@@ -16,7 +16,6 @@ use Illuminate\Http\Request;
 
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
 
