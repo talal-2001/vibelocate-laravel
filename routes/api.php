@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ChangePasswordController;
 use App\Http\Controllers\Api\CompleteProfileController;
 use App\Http\Controllers\Api\ForgotPasswordController;
+use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\ProfileController;
@@ -15,7 +16,6 @@ use App\Http\Controllers\Api\SessionsController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\VerifyEmailController;
 use App\Http\Controllers\Api\VerifyResetOtpController;
-
 use Illuminate\Support\Facades\Route;
 
 
@@ -36,6 +36,21 @@ Route::post(
 )->middleware(
     'vibe.rate:auth.login,5,15'
 );
+
+
+/*
+|--------------------------------------------------------------------------
+| Google Authentication
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/auth/google',
+    GoogleAuthController::class
+)->middleware(
+    'vibe.rate:auth.google,10,15'
+);
+
 
 Route::post(
     '/logout',
@@ -59,35 +74,22 @@ Route::post(
 |--------------------------------------------------------------------------
 */
 
-/*
-| المسار الأصلي
-*/
 Route::match(
     ['get', 'post'],
     '/verify-email',
     VerifyEmailController::class
 );
 
-/*
-| المسار الذي يستخدمه الفرونت
-*/
 Route::post(
     '/verify-otp',
     VerifyEmailController::class
 );
 
-
-/*
-| المسار الأصلي
-*/
 Route::post(
     '/resend-verification',
     ResendVerificationController::class
 );
 
-/*
-| المسار الذي يستخدمه الفرونت
-*/
 Route::post(
     '/resend-otp',
     ResendVerificationController::class
