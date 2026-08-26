@@ -18,117 +18,66 @@ class VerifyEmailController extends Controller
     {
         /*
         |--------------------------------------------------------------------------
-        | Read Verification Code
+        | Verify using email + OTP
         |--------------------------------------------------------------------------
-        |
-        | ندعم أكثر من اسم للحقل حتى يشتغل مع الفرونت الحالي:
-        | token
-        | otp
-        | code
-        |
         */
-
-        if ($request->isMethod('get')) {
-            $verificationCode = trim((string) (
-                $request->query('token')
-                ?? $request->query('otp')
-                ?? $request->query('code')
-                ?? ''
-            ));
-        } else {
-            $verificationCode = trim((string) (
-                $request->input('token')
-                ?? $request->input('otp')
-                ?? $request->input('code')
-                ?? ''
-            ));
+        if ($request->has('otp')) {
+            return $this->verifyOtp($request);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Old verification method using token
+        |--------------------------------------------------------------------------
+        */
+        return $this->verifyToken($request);
+    }
+
+    private function verifyOtp(Request $request)
+    {
         $email = strtolower(trim((string) $request->input('email', '')));
+        $otp   = trim((string) $request->input('otp', ''));
 
-        $deviceUuid = trim((string) $request->input(
-            'device_uuid',
-            ''
-        ));
-
-        $deviceType = (string) $request->input(
-            'device_type',
-            'web'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validation
-        |--------------------------------------------------------------------------
-        */
-
-        if ($verificationCode === '') {
-            return $this->error(
-                'Verification code is required',
-                422
-            );
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->error('Invalid email address', 422);
         }
 
-        if (
-            strlen($verificationCode) !== 6 ||
-            !ctype_digit($verificationCode)
-        ) {
-            return $this->error(
-                'Verification code must be 6 digits',
-                422
-            );
-        }
-
-        if (
-            !in_array(
-                $deviceType,
-                ['ios', 'android', 'web', 'desktop'],
-                true
-            )
-        ) {
-            return $this->error(
-                'Invalid device type',
-                422
-            );
+        if ($otp === '' || !preg_match('/^\d{6}$/', $otp)) {
+            return $this->error('Please enter the complete verification code', 422);
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Find Verification
+        | Find user
         |--------------------------------------------------------------------------
         */
+        $user = DB::table('users')
+            ->where('email', $email)
+            ->whereNull('deleted_at')
+            ->first();
 
-        $verificationQuery = DB::table('email_verifications')
-            ->where('token', $verificationCode)
-            ->where('expires_at', '>', now());
-
-        /*
-        | لو الفرونت بعت الإيميل، نربط الكود بنفس المستخدم
-        | حتى ما يتم استخدام كود مستخدم آخر بالخطأ.
-        */
-
-        if ($email !== '') {
-            $userForEmail = DB::table('users')
-                ->where('email', $email)
-                ->whereNull('deleted_at')
-                ->select('id')
-                ->first();
-
-            if (!$userForEmail) {
-                return $this->error(
-                    'User not found',
-                    404
-                );
-            }
-
-            $verificationQuery->where(
-                'user_id',
-                $userForEmail->id
-            );
+        if (!$user) {
+            return $this->error('User not found', 404);
         }
 
-        $verification = $verificationQuery
-            ->select('user_id')
+        /*
+        |--------------------------------------------------------------------------
+        | Already verified
+        |--------------------------------------------------------------------------
+        */
+        if ($user->email_verified_at !== null) {
+            return $this->successResponse($user);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check OTP
+        |--------------------------------------------------------------------------
+        */
+        $verification = DB::table('email_verifications')
+            ->where('user_id', $user->id)
+            ->where('token', $otp)
+            ->where('expires_at', '>', now())
             ->first();
 
         if (!$verification) {
@@ -138,11 +87,36 @@ class VerifyEmailController extends Controller
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Find User
-        |--------------------------------------------------------------------------
-        */
+        return $this->completeVerification($user);
+    }
+
+    private function verifyToken(Request $request)
+    {
+        $token = trim((string) (
+            $request->isMethod('get')
+                ? $request->query('token', '')
+                : $request->input('token', '')
+        ));
+
+        if ($token === '') {
+            return $this->error(
+                'Verification token is required',
+                422
+            );
+        }
+
+        $verification = DB::table('email_verifications')
+            ->where('token', $token)
+            ->where('expires_at', '>', now())
+            ->select('user_id')
+            ->first();
+
+        if (!$verification) {
+            return $this->error(
+                'Invalid or expired verification token',
+                400
+            );
+        }
 
         $user = DB::table('users')
             ->where('id', $verification->user_id)
@@ -150,180 +124,108 @@ class VerifyEmailController extends Controller
             ->first();
 
         if (!$user) {
-            return $this->error(
-                'User not found',
-                404
-            );
+            return $this->error('User not found', 404);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Already Verified
-        |--------------------------------------------------------------------------
-        */
+        return $this->completeVerification($user);
+    }
 
-        if (!empty($user->email_verified_at)) {
-            return $this->error(
-                'Email is already verified',
-                409
-            );
-        }
-
+    private function completeVerification($user)
+    {
         DB::beginTransaction();
 
         try {
-
             /*
             |--------------------------------------------------------------------------
-            | Activate Account
+            | Activate user
             |--------------------------------------------------------------------------
             */
-
             DB::table('users')
-                ->where('id', $verification->user_id)
+                ->where('id', $user->id)
                 ->update([
                     'email_verified_at' => now(),
-                    'status' => 'active',
+                    'status'            => 'active',
                 ]);
 
             /*
             |--------------------------------------------------------------------------
-            | Delete Used OTP
+            | Delete used OTP
             |--------------------------------------------------------------------------
             */
-
             DB::table('email_verifications')
-                ->where(
-                    'user_id',
-                    $verification->user_id
-                )
+                ->where('user_id', $user->id)
                 ->delete();
 
             /*
             |--------------------------------------------------------------------------
-            | Register Device
+            | Generate access + refresh tokens
             |--------------------------------------------------------------------------
             */
-
-            $deviceId = null;
-
-            if ($deviceUuid !== '') {
-
-                $device = DB::table('devices')
-                    ->where('user_id', $user->id)
-                    ->where('device_uuid', $deviceUuid)
-                    ->first();
-
-                if ($device) {
-
-                    $deviceId = (int) $device->id;
-
-                    DB::table('devices')
-                        ->where('id', $deviceId)
-                        ->update([
-                            'device_type' => $deviceType,
-                            'updated_at' => now(),
-                        ]);
-
-                } else {
-
-                    $deviceId = DB::table('devices')
-                        ->insertGetId([
-                            'user_id' => $user->id,
-                            'device_uuid' => $deviceUuid,
-                            'device_type' => $deviceType,
-                        ]);
-                }
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Access Token
-            |--------------------------------------------------------------------------
-            */
-
             $accessToken = $this->jwt->accessToken(
                 (int) $user->id,
                 $user->email
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Refresh Token
-            |--------------------------------------------------------------------------
-            */
-
             $refreshToken = $this->jwt->refreshToken();
 
             DB::table('refresh_tokens')->insert([
-                'user_id' => $user->id,
-                'device_id' => $deviceId,
-                'token_hash' => hash(
-                    'sha256',
-                    $refreshToken
-                ),
+                'user_id'    => $user->id,
+                'device_id'  => null,
+                'token_hash' => hash('sha256', $refreshToken),
                 'expires_at' => now()->addDays(7),
-            ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Login History
-            |--------------------------------------------------------------------------
-            */
-
-            DB::table('login_history')->insert([
-                'user_id' => $user->id,
-                'device_id' => $deviceId,
-                'ip_address' =>
-                    $request->ip() ?: '127.0.0.1',
-                'login_status' => 'success',
             ]);
 
             DB::commit();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Success
-            |--------------------------------------------------------------------------
-            */
-
             return response()->json([
-                'success' => true,
-                'message' =>
-                    'Email verified successfully',
-
-                'access_token' => $accessToken,
+                'success'       => true,
+                'message'       => 'Email verified successfully',
+                'access_token'  => $accessToken,
                 'refresh_token' => $refreshToken,
-                'token_type' => 'Bearer',
-                'expires_in' => 900,
-
-                'user' => [
-                    'id' => $user->id,
-                    'email' => $user->email,
-                ],
-
-            ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                'token_type'    => 'bearer',
+                'expires_in'    => 900,
+            ]);
 
         } catch (Throwable $e) {
-
-            if (DB::transactionLevel() > 0) {
-                DB::rollBack();
-            }
+            DB::rollBack();
 
             report($e);
 
-            return response()->json([
-                'success' => false,
-                'message' =>
-                    'Email verification failed',
-            ], 500);
+            return $this->error(
+                'Email verification failed',
+                500
+            );
         }
     }
 
-    private function error(
-        string $message,
-        int $status
-    ) {
+    private function successResponse($user)
+    {
+        try {
+            $accessToken = $this->jwt->accessToken(
+                (int) $user->id,
+                $user->email
+            );
+
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Email already verified',
+                'access_token' => $accessToken,
+                'token_type'   => 'bearer',
+                'expires_in'   => 900,
+            ]);
+
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->error(
+                'Unable to generate access token',
+                500
+            );
+        }
+    }
+
+    private function error(string $message, int $status)
+    {
         return response()->json([
             'success' => false,
             'message' => $message,
