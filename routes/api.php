@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ChangePasswordController;
 use App\Http\Controllers\Api\CompleteProfileController;
 use App\Http\Controllers\Api\ForgotPasswordController;
+use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\ProfileController;
@@ -15,9 +16,7 @@ use App\Http\Controllers\Api\SessionsController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\VerifyEmailController;
 use App\Http\Controllers\Api\VerifyResetOtpController;
-use App\Http\Controllers\Api\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +34,23 @@ Route::post(
     LoginController::class
 )->middleware(
     'vibe.rate:auth.login,5,15'
+);
+
+/*
+|--------------------------------------------------------------------------
+| Google Authentication
+|--------------------------------------------------------------------------
+|
+| Public route:
+| The user does NOT need a Laravel JWT before signing in with Google.
+|
+*/
+
+Route::post(
+    '/auth/google',
+    GoogleAuthController::class
+)->middleware(
+    'vibe.rate:auth.google,10,15'
 );
 
 Route::post(
@@ -60,7 +76,7 @@ Route::post(
 */
 
 /*
-| المسار الأصلي
+| Original route
 */
 Route::match(
     ['get', 'post'],
@@ -69,16 +85,15 @@ Route::match(
 );
 
 /*
-| المسار الذي يستخدمه الفرونت
+| Route used by frontend
 */
 Route::post(
     '/verify-otp',
     VerifyEmailController::class
 );
 
-
 /*
-| المسار الأصلي
+| Original route
 */
 Route::post(
     '/resend-verification',
@@ -86,7 +101,7 @@ Route::post(
 );
 
 /*
-| المسار الذي يستخدمه الفرونت
+| Route used by frontend
 */
 Route::post(
     '/resend-otp',
@@ -197,11 +212,4 @@ Route::middleware('jwt')->group(function () {
         '/two-factor',
         [TwoFactorController::class, 'destroy']
     );
-    Route::post(
-    '/auth/google',
-    GoogleAuthController::class
-)->middleware(
-    'vibe.rate:auth.google,10,15'
-);
 });
-
